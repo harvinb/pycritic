@@ -49,6 +49,8 @@ class Query(object):
 
     def extract_data(self):
         table = self.soup.find("ul", {"class" : "search_results module"})
+        if table is None:
+            return None  #Returns None in case there are no search results
         urls=[]
         for row in table.findAll("div",{"class":"main_stats"}):
             urls.append(self._extract_url(row))
@@ -148,15 +150,14 @@ class Scraper(object):
         return score.string
 
     def _extract_description(self):
-        #TODO : extract description crashes script when page has no description present
-        section = self.soup.select(".product_summary")[0].select(".data")[0]
+        section = self.soup.find("span",{"itemprop":"description"})
         if section is None:
-            print None
-        collapsed = section.select(".blurb_collapsed")
-        description = ""
-        if (collapsed):  # There's a collapse/expand button
-            expanded = section.select(".blurb_expanded")
-            description = unicode(collapsed[0].text + expanded[0].text).strip()
+            return str(None)
+        description=""
+        collapsed = section.find("span",{"class":"blurb blurb_collapsed"})
+        if collapsed is None:
+            description=unicode(section.span.string)
         else:
-            description = unicode(section.text.strip())
+            expanded = section.find("span",{"class":"blurb blurb_expanded"})
+            description = unicode(collapsed.string+expanded.string)
         return unicode(description)
